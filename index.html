@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Gofre</title>
+    <link rel="icon" type="image/png" href="icon.png" />
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="fonts/iconoir/iconoir.css" />
+    <link rel="stylesheet" href="fonts/inter.css" />
+    <link rel="manifest" href="manifest.json" />
+    <style></style>
+  </head>
+  <body>
+    <div id="app-container">
+      <div id="start-screen">
+        <h1>Gofre</h1>
+        <p>A variation of the Stroop selective attention test. This is hard.</p>
+        <button id="start-btn">Start Game</button>
+      </div>
+
+      <div id="game-screen-wrapper" class="hidden">
+        <div id="info-panel">
+          <span>Round: <span id="round-counter">0 / 20</span></span>
+        </div>
+        <div id="game-screen">
+          <canvas id="stroopCanvas"></canvas>
+          <div id="feedback-icon-container"></div>
+        </div>
+        <div id="question-area"></div>
+        <div id="number-pad"></div>
+      </div>
+
+      <div id="results-screen" class="hidden">
+        <h2>Results</h2>
+        <p id="accuracy-result"></p>
+        <p id="speed-result"></p>
+        <button id="restart-btn">Play Again</button>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
