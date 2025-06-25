@@ -1,7 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
   const canvasEl = document.getElementById("stroopCanvas");
-  const ctx = canvasEl.getContext("2d");
+  const ctx = canvasEl.getContext("2d"); // --- Simple, one-time setup based on your feedback ---
+  // 1. Calculate a size based on the initial screen width.
 
+  const canvasSize = window.innerWidth * 0.85; // 2. Set the canvas element's CSS style directly.
+  canvasEl.style.width = `${canvasSize}px`;
+  canvasEl.style.height = `${canvasSize}px`; // --- End of simple setup ---
   const startScreen = document.getElementById("start-screen");
   const gameScreenWrapper = document.getElementById("game-screen-wrapper");
   const resultsScreen = document.getElementById("results-screen");
@@ -33,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let state = {};
 
+  // This function now reads the size set by the simple setup above.
   function setupCanvas() {
     const dpr = window.devicePixelRatio || 1;
     const rect = canvasEl.getBoundingClientRect();
@@ -73,7 +78,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const shapeCounts = {};
     SHAPES.forEach((s) => (shapeCounts[s] = Math.floor(Math.random() * 4) + 1));
     const totalShapes = Object.values(shapeCounts).reduce((a, b) => a + b, 0);
-
     let displayedDigit = Math.floor(Math.random() * 9) + 1;
 
     state.animatedShapes = [];
@@ -106,16 +110,15 @@ document.addEventListener("DOMContentLoaded", () => {
       case "count_shape":
         const targetShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
         correctAnswer = shapeCounts[targetShape];
-        questionText = `<span class="shape-icon" style="color:${COLORS[5]}">${SHAPE_ICONS[targetShape]}</span> ?`;
+        questionText = `<span class="shape-icon" style="color:${COLORS[5]}"># of ${SHAPE_ICONS[targetShape]}</span> ?`;
         break;
       case "read_digit":
         correctAnswer = displayedDigit;
         questionText = "number?";
         break;
-      case "count_total":
       default:
         correctAnswer = totalShapes;
-        questionText = "shapes?";
+        questionText = "# of objects?";
         break;
     }
 
@@ -125,20 +128,17 @@ document.addEventListener("DOMContentLoaded", () => {
         : COLORS[0];
 
     state.currentTrial = {
-      shapeCounts,
-      totalShapes,
-      displayedDigit,
-      digitColor,
       correctAnswer,
       questionText,
+      displayedDigit,
+      digitColor,
     };
-
     state.awaitingInput = false;
     state.animationFrameId = requestAnimationFrame(animate);
     setTimeout(presentQuestion, 3500);
   }
 
-  function animate(timestamp) {
+  function animate() {
     if (state.awaitingInput) return;
 
     const canvasW = canvasEl.clientWidth;
@@ -146,22 +146,28 @@ document.addEventListener("DOMContentLoaded", () => {
     ctx.clearRect(0, 0, canvasW, canvasH);
 
     state.animatedShapes.forEach((s) => {
+      const halfSize = s.size / 2;
       s.x += s.vx;
       s.y += s.vy;
-      if (s.x > canvasW + s.size / 2) s.x = -s.size / 2;
-      if (s.x < -s.size / 2) s.x = canvasW + s.size / 2;
-      if (s.y > canvasH + s.size / 2) s.y = -s.size / 2;
-      if (s.y < -s.size / 2) s.y = canvasH + s.size / 2;
 
+      if (s.x + halfSize > canvasW || s.x - halfSize < 0) {
+        s.vx *= -1;
+        s.x = Math.max(halfSize, Math.min(canvasW - halfSize, s.x));
+      }
+      if (s.y + halfSize > canvasH || s.y - halfSize < 0) {
+        s.vy *= -1;
+        s.y = Math.max(halfSize, Math.min(canvasH - halfSize, s.y));
+      }
       const drawFunc = {
         square: drawSquare,
         circle: drawCircle,
         triangle: drawTriangle,
       }[s.shape];
-      drawFunc(s.x, s.y, s.size, s.color);
+      const drawSize = s.shape === "circle" ? s.size / 2 : s.size;
+      drawFunc(s.x, s.y, drawSize, s.color);
     });
 
-    const pulse = 1 + Math.sin(timestamp / 250) * 0.05;
+    const pulse = 1 + Math.sin(performance.now() / 250) * 0.05;
     const fontSize = canvasW / 3.5;
     ctx.fillStyle = state.currentTrial.digitColor;
     ctx.font = `bold ${fontSize * pulse}px Inter`;
@@ -196,23 +202,16 @@ document.addEventListener("DOMContentLoaded", () => {
       state.speedMultiplier += 0.015;
     }
 
-    if (state.currentRound >= GAME_ROUNDS) {
-      setTimeout(endGame, 600);
-    } else {
-      setTimeout(generateNewTrial, 600);
-    }
+    if (state.currentRound >= GAME_ROUNDS) setTimeout(endGame, 600);
+    else setTimeout(generateNewTrial, 600);
   }
 
   function flashFeedback(isCorrect) {
     const iconName = isCorrect ? "check" : "xmark";
     const color = isCorrect ? "var(--green)" : "var(--red)";
-
     feedbackIconContainer.innerHTML = `<span class="iconoir iconoir-${iconName}" style="color: ${color};"></span>`;
     feedbackIconContainer.classList.add("visible");
-
-    setTimeout(() => {
-      feedbackIconContainer.classList.remove("visible");
-    }, 500);
+    setTimeout(() => feedbackIconContainer.classList.remove("visible"), 500);
   }
 
   function setupNumberPad() {
@@ -235,11 +234,11 @@ document.addEventListener("DOMContentLoaded", () => {
       animationFrameId: null,
       currentTrial: {},
     };
-
     startScreen.classList.add("hidden");
     resultsScreen.classList.add("hidden");
     gameScreenWrapper.classList.remove("hidden");
 
+    // Call setupCanvas here, after the element is visible and has a size.
     setupCanvas();
     setupNumberPad();
     generateNewTrial();
@@ -248,18 +247,15 @@ document.addEventListener("DOMContentLoaded", () => {
   function endGame() {
     gameScreenWrapper.classList.add("hidden");
     resultsScreen.classList.remove("hidden");
-
     const accuracy = (state.correctCount / GAME_ROUNDS) * 100;
     const avgSpeed =
       state.correctCount > 0
         ? state.totalCorrectTime / state.correctCount / 1000
         : 0;
-
     accuracyResultEl.textContent = `Accuracy: ${accuracy.toFixed(1)}% (${state.correctCount}/${GAME_ROUNDS})`;
     speedResultEl.textContent = `Avg. Speed: ${avgSpeed.toFixed(2)}s / correct`;
   }
 
   startBtn.addEventListener("click", startGame);
   restartBtn.addEventListener("click", startGame);
-  window.addEventListener("resize", setupCanvas);
 });

@@ -92,7 +92,8 @@ canvas {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
-  width: 100%;
+  width: 70%;
+  margin: auto;
 }
 #number-pad button {
   background-color: var(--surface);
