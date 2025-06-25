@@ -91,19 +91,25 @@ canvas {
 #number-pad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  width: 70%;
-  margin: auto;
+  gap: 5px;
+  width: 85%;
+  max-width: 280px;
+  margin: 0 auto;
 }
+
 #number-pad button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background-color: var(--surface);
   color: var(--text);
   border: none;
   border-radius: 8px;
-  font-size: 2.2em;
+  font-size: clamp(2.2rem, 12vw, 3.5rem);
   font-weight: 500;
   cursor: pointer;
   aspect-ratio: 1 / 1;
+  padding: 0;
 }
 #start-screen,
 #results-screen {
