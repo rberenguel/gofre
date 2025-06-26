@@ -82,14 +82,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const allShapes = [];
     SHAPES.forEach((shape) => {
-      for (let i = 0; i < 6; i++) allShapes.push(shape);
+      for (let i = 0; i < 9; i++) allShapes.push(shape);
     });
     for (let i = allShapes.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [allShapes[i], allShapes[j]] = [allShapes[j], allShapes[i]];
     }
 
-    const selectedShapes = allShapes.slice(0, 9);
+    const selectedShapes = allShapes.slice(0, 2 + Math.random() * 8);
+    console.log(selectedShapes);
     const shapeCounts = { square: 0, circle: 0, triangle: 0 };
     selectedShapes.forEach((shape) => shapeCounts[shape]++);
 
@@ -132,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
         questionText = "number?";
         break;
       default: // count_total
-        correctAnswer = 9;
+        correctAnswer = selectedShapes.length;
         questionText = "# of objects?";
         break;
     }
