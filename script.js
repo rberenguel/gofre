@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "#2aa198",
     "#859900",
   ];
-  const GAME_ROUNDS = 2;
+  const GAME_ROUNDS = 20;
   const SHAPE_VIEW_DURATION = 3500;
 
   let state = {
@@ -184,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.lineTo(0, canvasH - segment);
     }
 
-    ctx.strokeStyle = "var(--primary)";
+    ctx.strokeStyle = "#940";
     ctx.lineWidth = Math.max(2, canvasEl.clientWidth / 100);
     ctx.stroke();
   }
