@@ -122,9 +122,6 @@ canvas {
   margin-top: 0;
 }
 
-/* --- Refactored Button Styles --- */
-
-/* Common visual properties for all main buttons */
 #start-btn,
 #copy-btn,
 #restart-btn {
@@ -135,12 +132,10 @@ canvas {
   cursor: pointer;
 }
 
-/* Layout for the start button */
 #start-btn {
   margin-top: 20px;
 }
 
-/* Layout for the action buttons on the results screen */
 .results-actions {
   display: flex;
   justify-content: space-around;
@@ -153,7 +148,6 @@ canvas {
   margin: 0 5px;
 }
 
-/* Color schemes for buttons */
 #start-btn,
 #restart-btn {
   background-color: var(--primary);
@@ -166,10 +160,18 @@ canvas {
   border: 1px solid var(--primary);
 }
 
-/* --- Table Styles --- */
 #results-table-container {
   width: 100%;
   margin-top: 15px;
+  text-align: left;
+}
+
+/* --- Updated Table Styles --- */
+.table-title {
+  margin-top: 20px;
+  margin-bottom: 5px;
+  border-top: 1px solid var(--surface);
+  padding-top: 15px;
 }
 
 .results-table {

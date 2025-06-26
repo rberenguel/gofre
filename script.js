@@ -36,8 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const GAME_ROUNDS = 2;
   const SHAPE_VIEW_DURATION = 3500;
 
-  let state = {};
-  let markdownStats = ""; // To hold the generated markdown table
+  let state = {
+    allSessionsStats: [],
+    currentGame: {},
+  };
+  let markdownStats = "";
 
   function setupCanvas() {
     const dpr = window.devicePixelRatio || 1;
@@ -71,9 +74,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function generateNewTrial() {
-    if (state.animationFrameId) cancelAnimationFrame(state.animationFrameId);
-    state.currentRound++;
-    roundCounterEl.textContent = `${state.currentRound} / ${GAME_ROUNDS}`;
+    if (state.currentGame.animationFrameId)
+      cancelAnimationFrame(state.currentGame.animationFrameId);
+    state.currentGame.currentRound++;
+    roundCounterEl.textContent = `${state.currentGame.currentRound} / ${GAME_ROUNDS}`;
     questionAreaEl.innerHTML = "";
 
     const allShapes = [];
@@ -89,22 +93,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const shapeCounts = { square: 0, circle: 0, triangle: 0 };
     selectedShapes.forEach((shape) => shapeCounts[shape]++);
 
-    const totalShapes = 9;
-    let displayedDigit = Math.floor(Math.random() * 9) + 1;
-
-    state.animatedShapes = [];
+    state.currentGame.animatedShapes = [];
     const usedColors = [];
     const shapeSize = canvasEl.clientWidth / 12;
 
     selectedShapes.forEach((shape) => {
-      const color = COLORS[state.animatedShapes.length % COLORS.length];
+      const color =
+        COLORS[state.currentGame.animatedShapes.length % COLORS.length];
       usedColors.push(color);
-      state.animatedShapes.push({
+      state.currentGame.animatedShapes.push({
         shape,
         x: Math.random() * (canvasEl.clientWidth - shapeSize * 2) + shapeSize,
         y: Math.random() * (canvasEl.clientHeight - shapeSize * 2) + shapeSize,
-        vx: (Math.random() - 0.5) * 0.5 * state.speedMultiplier,
-        vy: (Math.random() - 0.5) * 0.5 * state.speedMultiplier,
+        vx: (Math.random() - 0.5) * 0.5 * state.currentGame.speedMultiplier,
+        vy: (Math.random() - 0.5) * 0.5 * state.currentGame.speedMultiplier,
         color,
         size: shapeSize,
         rotation: 0,
@@ -126,11 +128,11 @@ document.addEventListener("DOMContentLoaded", () => {
         questionSubType = targetShape;
         break;
       case "read_digit":
-        correctAnswer = displayedDigit;
+        correctAnswer = Math.floor(Math.random() * 9) + 1;
         questionText = "number?";
         break;
       default: // count_total
-        correctAnswer = totalShapes;
+        correctAnswer = 9;
         questionText = "# of objects?";
         break;
     }
@@ -140,17 +142,17 @@ document.addEventListener("DOMContentLoaded", () => {
         ? usedColors[Math.floor(Math.random() * usedColors.length)]
         : COLORS[0];
 
-    state.currentTrial = {
+    state.currentGame.currentTrial = {
       correctAnswer,
       questionText,
-      displayedDigit,
+      displayedDigit: correctAnswer,
       digitColor,
       questionType,
       questionSubType,
     };
-    state.awaitingInput = false;
-    state.roundStartTime = performance.now();
-    state.animationFrameId = requestAnimationFrame(animate);
+    state.currentGame.awaitingInput = false;
+    state.currentGame.roundStartTime = performance.now();
+    state.currentGame.animationFrameId = requestAnimationFrame(animate);
     setTimeout(presentQuestion, SHAPE_VIEW_DURATION);
   }
 
@@ -182,29 +184,28 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.lineTo(0, canvasH - segment);
     }
 
-    ctx.strokeStyle = "#940";
+    ctx.strokeStyle = "var(--primary)";
     ctx.lineWidth = Math.max(2, canvasEl.clientWidth / 100);
     ctx.stroke();
   }
 
   function animate() {
-    if (state.awaitingInput) return;
+    if (state.currentGame.awaitingInput) return;
     const canvasW = canvasEl.clientWidth;
     const canvasH = canvasEl.clientHeight;
     ctx.clearRect(0, 0, canvasW, canvasH);
 
-    const elapsedTime = performance.now() - state.roundStartTime;
+    const elapsedTime = performance.now() - state.currentGame.roundStartTime;
     const timeRemaining = Math.max(0, SHAPE_VIEW_DURATION - elapsedTime);
     drawTimer(timeRemaining / SHAPE_VIEW_DURATION);
 
-    state.animatedShapes.forEach((s) => {
+    state.currentGame.animatedShapes.forEach((s) => {
       s.rotation += s.rotationSpeed;
-      const halfSize = s.size / 2;
       s.x += s.vx;
       s.y += s.vy;
 
-      if (s.x + halfSize > canvasW || s.x - halfSize < 0) s.vx *= -1;
-      if (s.y + halfSize > canvasH || s.y - halfSize < 0) s.vy *= -1;
+      if (s.x + s.size / 2 > canvasW || s.x - s.size / 2 < 0) s.vx *= -1;
+      if (s.y + s.size / 2 > canvasH || s.y - s.size / 2 < 0) s.vy *= -1;
 
       ctx.save();
       ctx.translate(s.x, s.y);
@@ -223,58 +224,55 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const pulse = 1 + Math.sin(performance.now() / 250) * 0.05;
     const fontSize = canvasW / 3.5;
-    ctx.fillStyle = state.currentTrial.digitColor;
+    ctx.fillStyle = state.currentGame.currentTrial.digitColor;
     ctx.font = `bold ${fontSize * pulse}px Inter`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(state.currentTrial.displayedDigit, canvasW / 2, canvasH / 2);
+    ctx.fillText(
+      state.currentGame.currentTrial.displayedDigit,
+      canvasW / 2,
+      canvasH / 2,
+    );
 
-    state.animationFrameId = requestAnimationFrame(animate);
+    state.currentGame.animationFrameId = requestAnimationFrame(animate);
   }
 
   function presentQuestion() {
-    if (state.awaitingInput) return;
-    cancelAnimationFrame(state.animationFrameId);
+    if (state.currentGame.awaitingInput) return;
+    cancelAnimationFrame(state.currentGame.animationFrameId);
     ctx.clearRect(0, 0, canvasEl.clientWidth, canvasEl.clientHeight);
-    questionAreaEl.innerHTML = state.currentTrial.questionText;
-    state.awaitingInput = true;
-    state.answerStartTime = performance.now();
+    questionAreaEl.innerHTML = state.currentGame.currentTrial.questionText;
+    state.currentGame.awaitingInput = true;
+    state.currentGame.answerStartTime = performance.now();
   }
 
   function handleUserInput(digit) {
-    if (!state.awaitingInput) return;
-    state.awaitingInput = false;
+    if (!state.currentGame.awaitingInput) return;
+    state.currentGame.awaitingInput = false;
 
-    const roundTime = performance.now() - state.answerStartTime;
-    const isCorrect = digit === state.currentTrial.correctAnswer;
+    const roundTime = performance.now() - state.currentGame.answerStartTime;
+    const isCorrect = digit === state.currentGame.currentTrial.correctAnswer;
 
-    // --- Statistics Update ---
-    const { questionType, questionSubType } = state.currentTrial;
-    let stat = state.stats[questionType];
+    const { questionType, questionSubType } = state.currentGame.currentTrial;
+    let stat = state.currentGame.stats[questionType];
     if (questionType === "count_shape") {
-      // Update aggregate for count_shape
-      state.stats.count_shape.aggregate.attempts++;
+      state.currentGame.stats.count_shape.aggregate.attempts++;
       if (isCorrect) {
-        state.stats.count_shape.aggregate.correct++;
-        state.stats.count_shape.aggregate.totalTime += roundTime;
+        state.currentGame.stats.count_shape.aggregate.correct++;
+        state.currentGame.stats.count_shape.aggregate.totalTime += roundTime;
       }
-      // Update specific shape
       stat = stat[questionSubType];
     }
     stat.attempts++;
     if (isCorrect) {
       stat.correct++;
       stat.totalTime += roundTime;
+      state.currentGame.speedMultiplier += 0.015;
     }
-    // --- End Statistics Update ---
 
     flashFeedback(isCorrect);
 
-    if (isCorrect) {
-      state.speedMultiplier += 0.015;
-    }
-
-    if (state.currentRound >= GAME_ROUNDS) setTimeout(endGame, 600);
+    if (state.currentGame.currentRound >= GAME_ROUNDS) setTimeout(endGame, 600);
     else setTimeout(generateNewTrial, 600);
   }
 
@@ -296,28 +294,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function initStats() {
-    const statBoilerplate = () => ({ attempts: 0, correct: 0, totalTime: 0 });
-    return {
-      read_digit: statBoilerplate(),
-      count_total: statBoilerplate(),
-      count_shape: {
-        aggregate: statBoilerplate(),
-        square: statBoilerplate(),
-        circle: statBoilerplate(),
-        triangle: statBoilerplate(),
-      },
-    };
-  }
+  const initStatsBoilerplate = () => ({
+    attempts: 0,
+    correct: 0,
+    totalTime: 0,
+  });
+  const initFullStats = () => ({
+    read_digit: initStatsBoilerplate(),
+    count_total: initStatsBoilerplate(),
+    count_shape: {
+      aggregate: initStatsBoilerplate(),
+      square: initStatsBoilerplate(),
+      circle: initStatsBoilerplate(),
+      triangle: initStatsBoilerplate(),
+    },
+  });
 
   function startGame() {
-    state = {
+    state.currentGame = {
       currentRound: 0,
       speedMultiplier: 1.0,
       awaitingInput: false,
       animationFrameId: null,
       currentTrial: {},
-      stats: initStats(),
+      stats: initFullStats(),
     };
     startScreen.classList.add("hidden");
     resultsScreen.classList.add("hidden");
@@ -327,65 +327,96 @@ document.addEventListener("DOMContentLoaded", () => {
     generateNewTrial();
   }
 
-  function generateStatsReport() {
-    let html = '<table class="results-table">';
-    html +=
-      "<thead><tr><th>Type</th><th>Atts</th><th>Fail%</th><th>AvgT(s)</th></tr></thead><tbody>";
-    let markdown = `### Gofre Report\n\n`;
-    markdown += "| Type | Atts | Fail% | AvgT(s) |\n";
-    markdown += "|:-----|-----:|------:|--------:|\n";
+  function generateStatsReport(allSessions) {
+    let html = "";
+    const today = new Date().toISOString().slice(0, 10);
+    let markdown = `### Gofre Report ${today}\n\n`;
 
     const calc = (stat) => {
-      if (stat.attempts === 0) return { atts: 0, fail: "N/A", avgT: "N/A" };
-      const failRate = (1 - stat.correct / stat.attempts) * 100;
+      if (stat.attempts === 0) return { atts: 0, succ: "N/A", avgT: "N/A" };
+      const successRate = (stat.correct / stat.attempts) * 100;
       const avgTime =
         stat.correct > 0 ? stat.totalTime / stat.correct / 1000 : 0;
       return {
         atts: stat.attempts,
-        fail: failRate.toFixed(1),
+        succ: successRate.toFixed(1),
         avgT: avgTime.toFixed(2),
       };
     };
 
-    const addRow = (label, stat, isSubRow = false) => {
-      const { atts, fail, avgT } = calc(stat);
-      const rowClass = isSubRow ? 'class="shape-row"' : "";
-      const mdLabel = isSubRow ? `  ↳ ${label}` : `**${label}**`;
+    const generateTable = (title, stats) => {
+      const addRow = (label, stat, isSubRow = false) => {
+        const { atts, succ, avgT } = calc(stat);
+        const rowClass = isSubRow ? 'class="shape-row"' : "";
+        const mdLabel = isSubRow ? `  ↳ ${label}` : `**${label}**`;
+        tableHtml += `<tr ${rowClass}><td>${label}</td><td>${atts}</td><td>${succ}</td><td>${avgT}</td></tr>`;
+        tableMarkdown += `| ${mdLabel} | ${atts} | ${succ} | ${avgT} |\n`;
+      };
 
-      html += `<tr ${rowClass}><td>${label}</td><td>${atts}</td><td>${fail}</td><td>${avgT}</td></tr>`;
-      markdown += `| ${mdLabel} | ${atts} | ${fail} | ${avgT} |\n`;
+      let tableHtml = `<h4 class="table-title">${title}</h4><table class="results-table"><thead><tr><th>Type</th><th>Atts</th><th>%</th><th>AvgT(s)</th></tr></thead><tbody>`;
+      let tableMarkdown = `#### ${title}\n| Type | Atts | Succ% | AvgT(s) |\n|:-----|-----:|------:|--------:|\n`;
+
+      addRow("Read Digit", stats.read_digit);
+      addRow("Count Total", stats.count_total);
+      addRow("Count Shape", stats.count_shape.aggregate);
+      SHAPES.forEach((shape) => addRow(shape, stats.count_shape[shape], true));
+
+      tableHtml += "</tbody></table>";
+      return { html: tableHtml, markdown: tableMarkdown };
     };
 
-    addRow("Read Digit", state.stats.read_digit);
-    addRow("Count Total", state.stats.count_total);
-    addRow("Count Shape", state.stats.count_shape.aggregate);
-    SHAPES.forEach((shape) => {
-      addRow(shape, state.stats.count_shape[shape], true);
+    allSessions.forEach((sessionStats, i) => {
+      const report = generateTable(`Session ${i + 1}`, sessionStats);
+      html += report.html;
+      markdown += report.markdown + "\n";
     });
 
-    html += "</tbody></table>";
+    if (allSessions.length > 1) {
+      const overallStats = initFullStats();
+      allSessions.forEach((sessionStats) => {
+        Object.keys(sessionStats).forEach((key) => {
+          if (key === "count_shape") {
+            Object.keys(sessionStats.count_shape).forEach((subKey) => {
+              overallStats.count_shape[subKey].attempts +=
+                sessionStats.count_shape[subKey].attempts;
+              overallStats.count_shape[subKey].correct +=
+                sessionStats.count_shape[subKey].correct;
+              overallStats.count_shape[subKey].totalTime +=
+                sessionStats.count_shape[subKey].totalTime;
+            });
+          } else {
+            overallStats[key].attempts += sessionStats[key].attempts;
+            overallStats[key].correct += sessionStats[key].correct;
+            overallStats[key].totalTime += sessionStats[key].totalTime;
+          }
+        });
+      });
+      const report = generateTable("Total (All Sessions)", overallStats);
+      html += report.html;
+      markdown += report.markdown;
+    }
+
     return { html, markdown };
   }
 
   function endGame() {
+    state.allSessionsStats.push(state.currentGame.stats);
     gameScreenWrapper.classList.add("hidden");
     resultsScreen.classList.remove("hidden");
-    const report = generateStatsReport();
+    const report = generateStatsReport(state.allSessionsStats);
     resultsTableContainer.innerHTML = report.html;
     markdownStats = report.markdown;
   }
 
   function copyToClipboard(text) {
-    // Modern way:
     if (navigator.clipboard && window.isSecureContext) {
       navigator.clipboard.writeText(text).then(() => {
         copyBtn.textContent = "Copied!";
         setTimeout(() => {
-          copyBtn.textContent = "Copy as Markdown";
+          copyBtn.textContent = "Copy for Obsidian";
         }, 2000);
       });
     } else {
-      // Fallback for older browsers or insecure contexts
       const textArea = document.createElement("textarea");
       textArea.value = text;
       textArea.style.position = "fixed";
@@ -397,7 +428,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.execCommand("copy");
         copyBtn.textContent = "Copied!";
         setTimeout(() => {
-          copyBtn.textContent = "Copy as Markdown";
+          copyBtn.textContent = "Copy for Obsidian";
         }, 2000);
       } catch (err) {
         console.error("Fallback: Oops, unable to copy", err);
