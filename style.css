@@ -18,7 +18,6 @@ body {
   background-color: var(--background);
   color: var(--text);
   display: flex;
-  /*flex-direction: column;*/
   justify-content: center;
   align-items: center;
   height: 100vh;
@@ -26,6 +25,7 @@ body {
   text-align: center;
   -webkit-tap-highlight-color: transparent;
   align-items: flex-start;
+  padding-top: 10px;
 }
 #app-container {
   display: flex;
@@ -38,7 +38,7 @@ body {
   box-sizing: border-box;
 }
 #game-screen {
-  position: relative; /* Needed for feedback icon positioning */
+  position: relative;
   width: 100%;
 }
 canvas {
@@ -75,7 +75,7 @@ canvas {
   line-height: 1.5em;
 }
 #question-area {
-  font-size: 2.2em; /* Adjusted for longer text */
+  font-size: 2.2em;
   font-weight: bold;
   color: var(--text-highlight);
   height: 1.5em;
@@ -114,22 +114,92 @@ canvas {
 #start-screen,
 #results-screen {
   padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 #start-screen h1,
 #results-screen h2 {
   margin-top: 0;
 }
+
+/* --- Refactored Button Styles --- */
+
+/* Common visual properties for all main buttons */
 #start-btn,
+#copy-btn,
 #restart-btn {
   font-size: 1.2em;
-  padding: 15px 25px;
+  padding: 15px 20px;
   border-radius: 8px;
   border: none;
-  background-color: var(--primary);
-  color: var(--background);
   cursor: pointer;
+}
+
+/* Layout for the start button */
+#start-btn {
   margin-top: 20px;
 }
+
+/* Layout for the action buttons on the results screen */
+.results-actions {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.results-actions button {
+  flex-grow: 1;
+  margin: 0 5px;
+}
+
+/* Color schemes for buttons */
+#start-btn,
+#restart-btn {
+  background-color: var(--primary);
+  color: var(--background);
+}
+
+#copy-btn {
+  background-color: var(--surface);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+/* --- Table Styles --- */
+#results-table-container {
+  width: 100%;
+  margin-top: 15px;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+
+.results-table th,
+.results-table td {
+  border: 1px solid var(--surface);
+  padding: 8px;
+  text-align: left;
+}
+
+.results-table th {
+  background-color: var(--surface);
+  color: var(--text-highlight);
+}
+
+.results-table td:nth-child(n + 2) {
+  text-align: right;
+}
+
+.results-table .shape-row td {
+  padding-left: 25px;
+  font-style: italic;
+  color: var(--text);
+}
+
 .hidden {
   display: none;
 }
