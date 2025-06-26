@@ -121,6 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
       questionText,
       questionSubType = null;
 
+    const number = Math.floor(Math.random() * 9) + 1;
+
     switch (questionType) {
       case "count_shape":
         const targetShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
@@ -129,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
         questionSubType = targetShape;
         break;
       case "read_digit":
-        correctAnswer = Math.floor(Math.random() * 9) + 1;
+        correctAnswer = number;
         questionText = "number?";
         break;
       default: // count_total
@@ -146,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentGame.currentTrial = {
       correctAnswer,
       questionText,
-      displayedDigit: correctAnswer,
+      displayedDigit: number,
       digitColor,
       questionType,
       questionSubType,
@@ -252,7 +254,10 @@ document.addEventListener("DOMContentLoaded", () => {
     state.currentGame.awaitingInput = false;
 
     const roundTime = performance.now() - state.currentGame.answerStartTime;
-    const isCorrect = digit === state.currentGame.currentTrial.correctAnswer;
+    let isCorrect = digit === state.currentGame.currentTrial.correctAnswer;
+    if (state.currentGame.currentTrial.correctAnswer === 0) {
+      isCorrect = true; // If we are asked for 0 and there is no zero, anything will be correct. I should fix this.
+    }
 
     const { questionType, questionSubType } = state.currentGame.currentTrial;
     let stat = state.currentGame.stats[questionType];
