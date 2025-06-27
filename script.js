@@ -18,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultsTableContainer = document.getElementById(
     "results-table-container",
   );
+  const helpBtn = document.getElementById("help-btn");
+  const closeHelpBtn = document.getElementById("close-help-btn");
+  const helpOverlay = document.getElementById("help-overlay");
 
   const SHAPES = ["square", "circle", "triangle"];
   const SHAPE_ICONS = { square: "■", circle: "●", triangle: "▲" };
@@ -481,6 +484,21 @@ document.addEventListener("DOMContentLoaded", () => {
       document.body.removeChild(textArea);
     }
   }
+
+  helpBtn.addEventListener("click", () => {
+    helpOverlay.classList.remove("hidden");
+  });
+
+  closeHelpBtn.addEventListener("click", () => {
+    helpOverlay.classList.add("hidden");
+  });
+
+  // Also hide the modal if the user clicks the background overlay
+  helpOverlay.addEventListener("click", (event) => {
+    if (event.target === helpOverlay) {
+      helpOverlay.classList.add("hidden");
+    }
+  });
 
   startBtn.addEventListener("click", startGame);
   restartBtn.addEventListener("click", startGame);

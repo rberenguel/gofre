@@ -17,9 +17,25 @@
   <body>
     <div id="app-container">
       <div id="start-screen">
+        <img src="icon.png" alt="Gofre Game Icon" id="splash-icon" />
         <h1>Gofre</h1>
-        <p>A variation of the Stroop selective attention test. This is hard.</p>
-        <button id="start-btn">Start Game</button>
+        <p>A test of selective attention.</p>
+        <div class="start-actions">
+          <button id="start-btn">Start</button>
+          <button id="help-btn">?</button>
+        </div>
+      </div>
+
+      <div id="help-overlay" class="hidden">
+        <div class="help-content">
+          <h2>How to Play</h2>
+          <p>
+            You will see colored shapes and a number for a few seconds. After
+            they disappear, you will be asked a question about what you saw.
+          </p>
+          <p>Your goal is to answer as quickly and accurately as possible.</p>
+          <button id="close-help-btn">Got It</button>
+        </div>
       </div>
 
       <div id="game-screen-wrapper" class="hidden">
