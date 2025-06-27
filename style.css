@@ -70,23 +70,11 @@ canvas {
   transform: scale(1);
 }
 #info-panel {
-  font-size: 1.2em;
-  height: 1.5em;
-  line-height: 1.5em;
-}
-#question-area {
-  font-size: 2.2em;
-  font-weight: bold;
-  color: var(--text-highlight);
-  height: 1.5em;
-  line-height: 1.5em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-#question-area .shape-icon {
-  line-height: 1;
+  font-size: 10px;
+  color: #c60;
+  position: absolute;
+  top: 3px;
+  left: 2em;
 }
 #number-pad {
   display: grid;
@@ -94,7 +82,7 @@ canvas {
   gap: 5px;
   width: 85%;
   max-width: 280px;
-  margin: 0 auto;
+  margin: 15px auto 0;
 }
 
 #number-pad button {

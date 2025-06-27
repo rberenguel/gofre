@@ -14,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const restartBtn = document.getElementById("restart-btn");
   const copyBtn = document.getElementById("copy-btn");
   const roundCounterEl = document.getElementById("round-counter");
-  const questionAreaEl = document.getElementById("question-area");
   const numberPadEl = document.getElementById("number-pad");
   const resultsTableContainer = document.getElementById(
     "results-table-container",
@@ -78,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
       cancelAnimationFrame(state.currentGame.animationFrameId);
     state.currentGame.currentRound++;
     roundCounterEl.textContent = `${state.currentGame.currentRound} / ${GAME_ROUNDS}`;
-    questionAreaEl.innerHTML = "";
 
     const allShapes = [];
     SHAPES.forEach((shape) => {
@@ -90,7 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const selectedShapes = allShapes.slice(0, 2 + Math.random() * 8);
-    console.log(selectedShapes);
     const shapeCounts = { square: 0, circle: 0, triangle: 0 };
     selectedShapes.forEach((shape) => shapeCounts[shape]++);
 
@@ -118,7 +115,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const questionType =
       QUESTION_TYPES[Math.floor(Math.random() * QUESTION_TYPES.length)];
     let correctAnswer,
-      questionText,
+      questionObject,
       questionSubType = null;
 
     const number = Math.floor(Math.random() * 9) + 1;
@@ -127,16 +124,23 @@ document.addEventListener("DOMContentLoaded", () => {
       case "count_shape":
         const targetShape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
         correctAnswer = shapeCounts[targetShape];
-        questionText = `<span class="shape-icon" style="color:${COLORS[5]}"># of ${SHAPE_ICONS[targetShape]}</span> ?`;
+        questionObject = {
+          type: "rich",
+          parts: [
+            { text: "# of ", color: "#93a1a1" },
+            { text: `${SHAPE_ICONS[targetShape]}`, color: COLORS[5] },
+            { text: " ?", color: "#93a1a1" },
+          ],
+        };
         questionSubType = targetShape;
         break;
       case "read_digit":
         correctAnswer = number;
-        questionText = "number?";
+        questionObject = { type: "simple", text: "Number?" };
         break;
       default: // count_total
         correctAnswer = selectedShapes.length;
-        questionText = "# of objects?";
+        questionObject = { type: "simple", text: "# of objects?" };
         break;
     }
 
@@ -147,7 +151,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     state.currentGame.currentTrial = {
       correctAnswer,
-      questionText,
+      questionObject,
       displayedDigit: number,
       digitColor,
       questionType,
@@ -202,6 +206,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const timeRemaining = Math.max(0, SHAPE_VIEW_DURATION - elapsedTime);
     drawTimer(timeRemaining / SHAPE_VIEW_DURATION);
 
+    // 1. Draw the number first, so it's in the background.
+    const pulse = 1 + Math.sin(performance.now() / 250) * 0.05;
+    const fontSize = canvasW / 3.5;
+    ctx.fillStyle = state.currentGame.currentTrial.digitColor;
+    ctx.font = `bold ${fontSize * pulse}px Inter`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      state.currentGame.currentTrial.displayedDigit,
+      canvasW / 2,
+      canvasH / 2,
+    );
+
+    // 2. Draw the shapes second, so they appear on top of the number.
     state.currentGame.animatedShapes.forEach((s) => {
       s.rotation += s.rotationSpeed;
       s.x += s.vx;
@@ -225,26 +243,45 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.restore();
     });
 
-    const pulse = 1 + Math.sin(performance.now() / 250) * 0.05;
-    const fontSize = canvasW / 3.5;
-    ctx.fillStyle = state.currentGame.currentTrial.digitColor;
-    ctx.font = `bold ${fontSize * pulse}px Inter`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(
-      state.currentGame.currentTrial.displayedDigit,
-      canvasW / 2,
-      canvasH / 2,
-    );
-
     state.currentGame.animationFrameId = requestAnimationFrame(animate);
   }
 
   function presentQuestion() {
     if (state.currentGame.awaitingInput) return;
     cancelAnimationFrame(state.currentGame.animationFrameId);
-    ctx.clearRect(0, 0, canvasEl.clientWidth, canvasEl.clientHeight);
-    questionAreaEl.innerHTML = state.currentGame.currentTrial.questionText;
+
+    const canvasW = canvasEl.clientWidth;
+    const canvasH = canvasEl.clientHeight;
+    ctx.clearRect(0, 0, canvasW, canvasH);
+
+    const { questionObject } = state.currentGame.currentTrial;
+    const fontSize = canvasW / 10;
+    ctx.font = `${fontSize}px Inter`;
+    ctx.textBaseline = "middle";
+
+    if (questionObject.type === "simple") {
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#93a1a1"; // from --text-highlight
+      ctx.fillText(questionObject.text, canvasW / 2, canvasH / 2);
+    } else {
+      // rich text
+      let totalWidth = 0;
+      const partMetrics = questionObject.parts.map((part) => {
+        const metrics = ctx.measureText(part.text);
+        totalWidth += metrics.width;
+        return metrics;
+      });
+
+      let currentX = (canvasW - totalWidth) / 2;
+      ctx.textAlign = "left";
+
+      questionObject.parts.forEach((part, index) => {
+        ctx.fillStyle = part.color;
+        ctx.fillText(part.text, currentX, canvasH / 2);
+        currentX += partMetrics[index].width;
+      });
+    }
+
     state.currentGame.awaitingInput = true;
     state.currentGame.answerStartTime = performance.now();
   }
@@ -276,12 +313,14 @@ document.addEventListener("DOMContentLoaded", () => {
       state.currentGame.speedMultiplier += 0.015;
     }
 
+    // Clear the canvas to remove the question text
+    ctx.clearRect(0, 0, canvasEl.clientWidth, canvasEl.clientHeight);
+
     flashFeedback(isCorrect);
 
     if (state.currentGame.currentRound >= GAME_ROUNDS) setTimeout(endGame, 600);
     else setTimeout(generateNewTrial, 600);
   }
-
   function flashFeedback(isCorrect) {
     const iconName = isCorrect ? "check" : "xmark";
     const color = isCorrect ? "var(--green)" : "var(--red)";
