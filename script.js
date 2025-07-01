@@ -1,4 +1,7 @@
+import { initHaptic, triggerHaptic, triggerHapticError } from "./haptic.js";
+
 document.addEventListener("DOMContentLoaded", () => {
+  initHaptic();
   const canvasEl = document.getElementById("stroopCanvas");
   const ctx = canvasEl.getContext("2d");
   const canvasSize = window.innerWidth * 0.85;
@@ -311,9 +314,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     stat.attempts++;
     if (isCorrect) {
+      triggerHaptic();
       stat.correct++;
       stat.totalTime += roundTime;
       state.currentGame.speedMultiplier += 0.015;
+    } else {
+      triggerHapticError();
     }
 
     // Clear the canvas to remove the question text
@@ -486,21 +492,33 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   helpBtn.addEventListener("click", () => {
+    triggerHaptic();
     helpOverlay.classList.remove("hidden");
   });
 
   closeHelpBtn.addEventListener("click", () => {
+    triggerHaptic();
     helpOverlay.classList.add("hidden");
   });
 
   // Also hide the modal if the user clicks the background overlay
   helpOverlay.addEventListener("click", (event) => {
     if (event.target === helpOverlay) {
+      triggerHaptic();
       helpOverlay.classList.add("hidden");
     }
   });
 
-  startBtn.addEventListener("click", startGame);
-  restartBtn.addEventListener("click", startGame);
-  copyBtn.addEventListener("click", () => copyToClipboard(markdownStats));
+  startBtn.addEventListener("click", () => {
+    triggerHaptic();
+    startGame();
+  });
+  restartBtn.addEventListener("click", () => {
+    triggerHaptic();
+    startGame();
+  });
+  copyBtn.addEventListener("click", () => {
+    triggerHaptic();
+    copyToClipboard(markdownStats);
+  });
 });
